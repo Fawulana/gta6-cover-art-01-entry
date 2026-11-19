@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: MIT
-// Neon Shore Cover Lab — fixed scenes for screenshots: ?shot=cover draws one exported
-// cover full frame (the app's own drawing, at the export size); ?shot=editor shows the
-// editor with the sample photos loaded. window.__shotReady is set once painted.
-import { LAYOUTS, SIZES, drawCover } from './cover.js';
-import { GRADES } from './grades.js';
-import { SAMPLES, loadSample, redraw, resetPanels, state } from './main.js';
+// Vice Heat Cover Studio — fixed scenes for screenshots: ?shot=cover draws one
+// exported cover full frame (the app's own drawing, at the export size);
+// ?shot=editor shows the editor with the sample photos loaded.
+// window.__shotReady is set once painted.
+import { COMPOSITIONS, SIZES, drawPoster } from './poster.js';
+import { TONES } from './tones.js';
+import { SAMPLES, loadSample, redraw, resetZones, state } from './editor.js';
 
-/** Applies the scene's query params (layout, grade, title, subtitle, size, photos). */
+/** Applies the scene's query params (composition, tone, title, subtitle, size, photos). */
 export function applyScene(query) {
-  const layout = query.get('layout');
-  if (layout && LAYOUTS[layout]) state.layout = layout;
-  const grade = query.get('grade');
-  if (grade && GRADES[grade]) state.grade = grade;
+  const composition = query.get('composition');
+  if (composition && COMPOSITIONS[composition]) state.composition = composition;
+  const tone = query.get('tone');
+  if (tone && TONES[tone]) state.tone = tone;
   const title = query.get('title');
   if (title !== null) state.title = title;
   const subtitle = query.get('subtitle');
@@ -21,12 +22,12 @@ export function applyScene(query) {
     const found = SIZES.findIndex((s) => `${s.w}x${s.h}` === size);
     if (found >= 0) state.sizeIndex = found;
   }
-  resetPanels();
+  resetZones();
 }
 
-/** Loads the scene's photos: `photos=a,b,c` sample ids, or the three defaults. */
+/** Loads the scene's photos: `photos=a,b,c,d` sample ids, or the four defaults. */
 export async function loadScenePhotos(query) {
-  const ids = (query.get('photos') || 'boulevard,rooftop,neon').split(',');
+  const ids = (query.get('photos') || 'rider,boat,pool,gator').split(',');
   await Promise.all(ids.map((id, i) => {
     const sample = SAMPLES.find((s) => s.id === id) || SAMPLES[i % SAMPLES.length];
     return loadSample(i, sample.id);
@@ -45,7 +46,7 @@ export async function paintWhenReady(paint) {
 }
 
 /** Runs one fixed scene: 'cover' (full-frame cover) or 'editor' (the editor at work). */
-export async function runShot(shot, query) {
+export async function runScene(shot, query) {
   applyScene(query);
   await loadScenePhotos(query);
   const preview = document.getElementById('preview');
@@ -55,7 +56,7 @@ export async function runShot(shot, query) {
     await paintWhenReady(() => {
       preview.width = size.w;
       preview.height = size.h;
-      drawCover(preview, state);
+      drawPoster(preview, state);
     });
   } else if (shot === 'editor') {
     await paintWhenReady(() => redraw());
